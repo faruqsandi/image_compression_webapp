@@ -5,7 +5,7 @@ from typing import Optional, Union
 import aiofiles
 import filetype
 from celery.exceptions import CeleryError
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel
 
@@ -42,7 +42,9 @@ class TaskOut(BaseModel):
 
 
 @app.post("/upload")
-async def upload(file: UploadFile):
+async def upload(
+    quality: int = Form(default=..., le=100, ge=20), file: UploadFile = File(...)
+):
     random_uuid = uuid.uuid4().hex
 
     temporary_file_path = f"{TEMP_DIR}/{random_uuid}_{file.filename}"
@@ -54,7 +56,7 @@ async def upload(file: UploadFile):
     if not filetype.helpers.is_image(temporary_file_path):
         return ErrorResponseSchema(message="File is not an image", code=400)
 
-    task = compress_image.delay(temporary_file_path, 50)  # type: ignore
+    task = compress_image.delay(temporary_file_path, quality)  # type: ignore
     return ResponseSchema(
         data={"task_id": task.id}, message="File uploaded successfully"
     )
