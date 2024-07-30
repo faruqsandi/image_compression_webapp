@@ -1,0 +1,8 @@
+fastapi
+celery
+redis
+uvicorn
+python-multipart
+aiofiles
+filetype
+pillow
