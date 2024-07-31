@@ -47,24 +47,19 @@ def delete_task_result(task_id):
     result.forget()
 
 
-@app.task(queue="tnr_imgcmprs_queue", name="schedule_deletion")
-def schedule_deletion(task_id, countdown: int):
-    delete_task_result.apply_async((task_id,), countdown=countdown)  # type: ignore
-
-
 @signals.task_success.connect(sender=compress_image)
 def task_success_handler(sender, result, **kwargs):
     task_id = sender.request.correlation_id
-    schedule_deletion.delay(task_id, 60 * 30)  # type: ignore
+    delete_task_result.apply_async((task_id,), countdown=60 * 30)  # type: ignore
 
 
 @signals.task_failure.connect(sender=compress_image)
 def task_failure_handler(sender, task_id, **kwargs):
     task_id = task_id
-    schedule_deletion.delay(task_id, 0)  # type: ignore
+    delete_task_result.apply_async((task_id,), countdown=0)  # type: ignore
 
 
 @signals.task_revoked.connect(sender=compress_image)
 def task_revoked_handler(sender, request, **kwargs):
     task_id = request.id
-    schedule_deletion.delay(task_id, 0)  # type: ignore
+    delete_task_result.apply_async((task_id,), countdown=0)  # type: ignore

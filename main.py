@@ -94,7 +94,7 @@ def download(task_id: str):
 
 
 @app.get("/task/{task_id}")
-async def get_task_result(task_id: str):
+async def get_status(task_id: str):
     try:
         r = celery_app.AsyncResult(task_id)
 
